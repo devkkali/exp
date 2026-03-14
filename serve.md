@@ -61,6 +61,9 @@ npm install
 # Ensure production env file exists (SQLite DB at project root)
 cat > .env << 'EOF'
 DATABASE_URL="file:./dev.db"
+AUTH_BOOTSTRAP_USERNAME="admin"
+AUTH_BOOTSTRAP_PASSWORD="change_me_now"
+AUTH_SECRET="change_me_auth_secret"
 EOF
 
 # Run Prisma migration (creates/updates SQLite DB)
@@ -158,6 +161,7 @@ sudo ufw status
 5. The app will appear on your home screen and open in standalone mode (no browser chrome)
 
 > **Note:** HTTPS is required for PWA install and service worker to work.
+> **Important:** Set strong `AUTH_BOOTSTRAP_USERNAME`, `AUTH_BOOTSTRAP_PASSWORD`, and `AUTH_SECRET` before first production login. After first sign-in, immediately go to **Change password** inside the app and rotate the password there.
 
 ---
 

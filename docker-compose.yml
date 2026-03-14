@@ -9,6 +9,11 @@ services:
       NODE_ENV: production
       PORT: 3000
       DATABASE_URL: file:/app/data/dev.db
+      AUTH_BOOTSTRAP_USERNAME: ${AUTH_BOOTSTRAP_USERNAME:-}
+      AUTH_BOOTSTRAP_PASSWORD: ${AUTH_BOOTSTRAP_PASSWORD:-}
+      AUTH_USERNAME: ${AUTH_USERNAME:-admin}
+      AUTH_PASSWORD: ${AUTH_PASSWORD:-change_me_now}
+      AUTH_SECRET: ${AUTH_SECRET:-change_me_auth_secret}
     ports:
       - "3000:3000"
     volumes:

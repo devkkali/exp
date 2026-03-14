@@ -1,5 +1,5 @@
 'use client';
-import { useMemo, useState, useCallback, useEffect } from 'react';
+import { useMemo, useState, useCallback } from 'react';
 import { useAppData } from '@/providers/DataProvider';
 import {
   filterByMonth,
@@ -31,6 +31,9 @@ export function TransactionsScreen() {
   const [searchQuery, setSearchQuery] = useState('');
 
   const isSelecting = selectedIds.size > 0;
+  const clearSelection = useCallback(() => {
+    setSelectedIds(new Set());
+  }, []);
 
   const monthTx = useMemo(
     () => filterByMonth(transactions, selectedMonth),
@@ -47,10 +50,6 @@ export function TransactionsScreen() {
 
   const income = useMemo(() => totalIncome(visibleTx), [visibleTx]);
   const expenses = useMemo(() => totalExpenses(visibleTx), [visibleTx]);
-
-  useEffect(() => {
-    setSelectedIds(new Set());
-  }, [selectedMonth, groupBy, categoryFilter, searchQuery]);
 
   const handleSelect = useCallback((id: string) => {
     setSelectedIds((prev) => {
@@ -79,9 +78,9 @@ export function TransactionsScreen() {
 
   const handleBulkDelete = useCallback(async () => {
     await deleteTransactionsBulk(Array.from(selectedIds));
-    setSelectedIds(new Set());
+    clearSelection();
     setShowDeleteModal(false);
-  }, [selectedIds, deleteTransactionsBulk]);
+  }, [selectedIds, deleteTransactionsBulk, clearSelection]);
 
   if (!isLoaded) {
     return (
@@ -99,7 +98,7 @@ export function TransactionsScreen() {
         rightAction={
           isSelecting ? (
             <button
-              onClick={() => setSelectedIds(new Set())}
+              onClick={clearSelection}
               className="text-sm text-violet-400 hover:text-violet-300"
             >
               Cancel
@@ -126,24 +125,39 @@ export function TransactionsScreen() {
       )}
 
       <div className="space-y-4">
-        <MonthPicker value={selectedMonth} onChange={setSelectedMonth} />
+        <MonthPicker
+          value={selectedMonth}
+          onChange={(value) => {
+            clearSelection();
+            setSelectedMonth(value);
+          }}
+        />
         <Input
           label="Search by name"
           placeholder="Type transaction name..."
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          onChange={(e) => {
+            clearSelection();
+            setSearchQuery(e.target.value);
+          }}
         />
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <Select
             label="Group by"
             value={groupBy}
-            onChange={(e) => setGroupBy(e.target.value as TransactionGroupBy)}
+            onChange={(e) => {
+              clearSelection();
+              setGroupBy(e.target.value as TransactionGroupBy);
+            }}
             options={GROUP_BY_OPTIONS.map((opt) => ({ value: opt.value, label: opt.label }))}
           />
           <Select
             label="Filter (category)"
             value={categoryFilter}
-            onChange={(e) => setCategoryFilter(e.target.value)}
+            onChange={(e) => {
+              clearSelection();
+              setCategoryFilter(e.target.value);
+            }}
             options={[
               { value: 'all', label: 'All categories' },
               ...CATEGORIES.map((category) => ({

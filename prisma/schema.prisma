@@ -25,3 +25,11 @@ model MonthlyBudget {
   totalBudget     Float  @default(0)
   categoryBudgets String @default("{}") // JSON string
 }
+
+model AuthUser {
+  id           String   @id @default(uuid())
+  username     String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
