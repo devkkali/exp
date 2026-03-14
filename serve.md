@@ -61,6 +61,7 @@ npm install
 # Ensure production env file exists (SQLite DB at project root)
 cat > .env << 'EOF'
 DATABASE_URL="file:./dev.db"
+HOST_PORT="3010"
 AUTH_BOOTSTRAP_USERNAME="admin"
 AUTH_BOOTSTRAP_PASSWORD="change_me_now"
 AUTH_SECRET="change_me_auth_secret"

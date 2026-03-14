@@ -15,7 +15,7 @@ services:
       AUTH_PASSWORD: ${AUTH_PASSWORD:-change_me_now}
       AUTH_SECRET: ${AUTH_SECRET:-change_me_auth_secret}
     ports:
-      - "3000:3000"
+      - "${HOST_PORT:-3000}:3000"
     volumes:
       - pocket_budget_data:/app/data
 
