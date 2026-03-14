@@ -1,4 +1,5 @@
 import { SignJWT, jwtVerify } from 'jose';
+import { type NextRequest } from 'next/server';
 
 export const AUTH_COOKIE_NAME = 'pb_auth_session';
 const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 7; // 7 days
@@ -33,4 +34,13 @@ export async function verifySessionToken(token: string): Promise<boolean> {
 
 export function getSessionMaxAge(): number {
   return SESSION_MAX_AGE_SECONDS;
+}
+
+export function shouldUseSecureCookie(request: NextRequest): boolean {
+  if (process.env.NODE_ENV !== 'production') return false;
+  const forwardedProto = request.headers.get('x-forwarded-proto');
+  if (forwardedProto) {
+    return forwardedProto.split(',')[0].trim() === 'https';
+  }
+  return request.nextUrl.protocol === 'https:';
 }

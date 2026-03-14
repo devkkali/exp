@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { AUTH_COOKIE_NAME, createSessionToken, getSessionMaxAge } from '@/lib/auth-session';
+import {
+  AUTH_COOKIE_NAME,
+  createSessionToken,
+  getSessionMaxAge,
+  shouldUseSecureCookie,
+} from '@/lib/auth-session';
 import {
   ensureBootstrapAuthUser,
   findAuthUserByUsername,
@@ -27,7 +32,7 @@ export async function POST(request: NextRequest) {
   const response = NextResponse.json({ ok: true });
   response.cookies.set(AUTH_COOKIE_NAME, token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure: shouldUseSecureCookie(request),
     sameSite: 'lax',
     path: '/',
     maxAge: getSessionMaxAge(),
