@@ -6,12 +6,15 @@ ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
 COPY package*.json ./
-RUN npm ci
+RUN npm ci --include=dev
 
 COPY . .
 
 RUN npx prisma generate
 RUN npm run build
+RUN npm prune --omit=dev
+
+ENV NODE_ENV=production
 
 RUN mkdir -p /app/data
 
