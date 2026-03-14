@@ -1,0 +1,27 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Transaction {
+  id          String   @id @default(uuid())
+  type        String   // 'income' | 'expense'
+  date        String   // YYYY-MM-DD
+  title       String
+  amount      Float
+  category    String
+  note        String   @default("")
+  isEstimated Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model MonthlyBudget {
+  id              String @id @default(uuid())
+  monthKey        String @unique // YYYY-MM
+  totalBudget     Float  @default(0)
+  categoryBudgets String @default("{}") // JSON string
+}

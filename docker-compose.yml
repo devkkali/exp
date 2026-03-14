@@ -1,0 +1,18 @@
+services:
+  pocket-budget:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pocket-budget
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: file:/app/data/dev.db
+    ports:
+      - "3000:3000"
+    volumes:
+      - pocket_budget_data:/app/data
+
+volumes:
+  pocket_budget_data:
