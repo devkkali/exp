@@ -14,7 +14,7 @@ export default function AddTransactionPage() {
 
   async function handleSubmit(data: TransactionFormData) {
     await addTransaction(data);
-    router.push('/');
+    router.push('/transactions');
   }
 
   return (

@@ -17,9 +17,11 @@ import * as api from '@/lib/api';
 
 interface AppData {
   transactions: Transaction[];
+  allTransactions: Transaction[];
   budgets: MonthlyBudget[];
   selectedMonth: string;
   isLoaded: boolean;
+  includePlanned: boolean;
 
   addTransaction: (data: TransactionFormData) => Promise<void>;
   addTransactionsBulk: (data: TransactionFormData[]) => Promise<void>;
@@ -32,8 +34,11 @@ interface AppData {
   getBudgetForMonth: (monthKey: string) => MonthlyBudget | undefined;
 
   setSelectedMonth: (monthKey: string) => void;
+  setIncludePlanned: (value: boolean) => void;
   refresh: () => Promise<void>;
 }
+
+const INCLUDE_PLANNED_KEY = 'pb_include_planned';
 
 const DataContext = createContext<AppData | null>(null);
 
@@ -44,6 +49,25 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [budgets, setBudgets] = useState<MonthlyBudget[]>([]);
   const [selectedMonth, setSelectedMonth] = useState(getCurrentMonthKey());
   const [isLoaded, setIsLoaded] = useState(false);
+  const [includePlanned, setIncludePlannedState] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const saved = window.localStorage.getItem(INCLUDE_PLANNED_KEY);
+    if (saved === 'true') setIncludePlannedState(true);
+  }, []);
+
+  const setIncludePlanned = useCallback((value: boolean) => {
+    setIncludePlannedState(value);
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(INCLUDE_PLANNED_KEY, value ? 'true' : 'false');
+    }
+  }, []);
+
+  const visibleTransactions = useMemo(
+    () => (includePlanned ? transactions : transactions.filter((t) => !t.isEstimated)),
+    [transactions, includePlanned]
+  );
 
   // ── Initial fetch ────────────────────────────
 
@@ -144,10 +168,12 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<AppData>(
     () => ({
-      transactions,
+      transactions: visibleTransactions,
+      allTransactions: transactions,
       budgets,
       selectedMonth,
       isLoaded,
+      includePlanned,
       addTransaction,
       addTransactionsBulk,
       updateTransaction,
@@ -157,14 +183,15 @@ export function DataProvider({ children }: { children: ReactNode }) {
       setCategoryBudget,
       getBudgetForMonth,
       setSelectedMonth,
+      setIncludePlanned,
       refresh: loadAll,
     }),
     [
-      transactions, budgets, selectedMonth, isLoaded,
+      visibleTransactions, transactions, budgets, selectedMonth, isLoaded, includePlanned,
       addTransaction, addTransactionsBulk, updateTransaction,
       deleteTransaction, deleteTransactionsBulk,
       setBudget, setCategoryBudget, getBudgetForMonth,
-      loadAll,
+      setIncludePlanned, loadAll,
     ]
   );
 

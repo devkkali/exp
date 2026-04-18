@@ -1,27 +1,44 @@
 'use client';
 
 import { GradientCard } from '@/components/ui/Card';
-import { formatCurrency, formatMonthLabel } from '@/lib/format';
+import { MonthPicker } from '@/components/ui/MonthPicker';
+import { formatCurrency } from '@/lib/format';
 
 interface WelcomeCardProps {
   monthKey: string;
+  onMonthChange: (key: string) => void;
   netBalance: number;
+  income: number;
+  expenses: number;
 }
 
-export function WelcomeCard({ monthKey, netBalance }: WelcomeCardProps) {
+export function WelcomeCard({
+  monthKey,
+  onMonthChange,
+  netBalance,
+  income,
+  expenses,
+}: WelcomeCardProps) {
+  const balanceColor = netBalance >= 0 ? 'text-emerald-300' : 'text-red-300';
   return (
     <GradientCard>
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <p className="text-sm text-white/60">Welcome back</p>
-          <h1 className="mt-1 text-2xl font-bold tracking-tight">Pocket Budget</h1>
-          <p className="mt-2 text-sm text-white/50">{formatMonthLabel(monthKey)} overview</p>
-        </div>
-        <div className="rounded-2xl bg-white/10 px-3 py-2 text-right">
-          <p className="text-[11px] uppercase tracking-[0.2em] text-white/45">Balance</p>
-          <p className={`mt-1 text-lg font-semibold ${netBalance >= 0 ? 'text-emerald-300' : 'text-red-300'}`}>
+      <MonthPicker value={monthKey} onChange={onMonthChange} />
+      <div className="mt-3 flex items-baseline justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-[10px] uppercase tracking-[0.15em] text-white/45">Net</p>
+          <p className={`text-2xl font-bold tracking-tight ${balanceColor}`}>
             {formatCurrency(netBalance)}
           </p>
+        </div>
+        <div className="flex items-center gap-4 text-right text-sm">
+          <div>
+            <p className="text-[10px] uppercase tracking-[0.15em] text-emerald-300/70">In</p>
+            <p className="font-semibold text-emerald-300">{formatCurrency(income)}</p>
+          </div>
+          <div>
+            <p className="text-[10px] uppercase tracking-[0.15em] text-red-300/70">Out</p>
+            <p className="font-semibold text-red-300">{formatCurrency(expenses)}</p>
+          </div>
         </div>
       </div>
     </GradientCard>

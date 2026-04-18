@@ -8,19 +8,16 @@ import {
   totalIncome,
   totalExpenses,
   netBalance,
-  actualExpenses,
   topExpenseCategories,
+  categoryComparison,
 } from '@/lib/calculations';
 import { generateInsights } from '@/lib/insights';
 
 import { WelcomeCard } from './WelcomeCard';
-import { SummaryStatCard } from './SummaryStatCard';
-import { BudgetProgressCard } from './BudgetProgressCard';
 import { TopCategoriesCard } from './TopCategoriesCard';
 import { InsightCard } from './InsightCard';
-import { MonthComparisonTeaser } from './MonthComparisonTeaser';
-import { MonthPicker } from '@/components/ui/MonthPicker';
 import { CategoryPieChart } from '@/components/charts/CategoryPieChart';
+import { PlannedToggle } from '@/components/ui/PlannedToggle';
 
 export function DashboardScreen() {
   const { transactions, selectedMonth, setSelectedMonth, getBudgetForMonth, isLoaded } = useAppData();
@@ -32,14 +29,16 @@ export function DashboardScreen() {
   const income = useMemo(() => totalIncome(monthTx), [monthTx]);
   const expenses = useMemo(() => totalExpenses(monthTx), [monthTx]);
   const balance = useMemo(() => netBalance(monthTx), [monthTx]);
-  const actual = useMemo(() => actualExpenses(monthTx), [monthTx]);
   const topCats = useMemo(() => topExpenseCategories(monthTx), [monthTx]);
+  const categoryDeltas = useMemo(
+    () => categoryComparison(prevMonthTx, monthTx),
+    [prevMonthTx, monthTx]
+  );
   const budget = getBudgetForMonth(selectedMonth);
   const insights = useMemo(
     () => generateInsights(monthTx, prevMonthTx, budget),
     [monthTx, prevMonthTx, budget]
   );
-  const prevExpenses = useMemo(() => totalExpenses(prevMonthTx), [prevMonthTx]);
 
   if (!isLoaded) {
     return (
@@ -50,34 +49,24 @@ export function DashboardScreen() {
   }
 
   return (
-    <div className="space-y-4">
-      <MonthPicker value={selectedMonth} onChange={setSelectedMonth} />
-
-      <WelcomeCard monthKey={selectedMonth} netBalance={balance} />
-
-      <div className="grid grid-cols-2 gap-3">
-        <SummaryStatCard label="Income" amount={income} subtext="All income this month" />
-        <SummaryStatCard label="Expenses" amount={expenses} subtext="All spending this month" />
+    <div className="space-y-3">
+      <div className="flex justify-end">
+        <PlannedToggle />
       </div>
 
-      <BudgetProgressCard
-        actualSpend={actual}
-        budgetTotal={budget?.totalBudget ?? 0}
-        topCategories={topCats}
+      <WelcomeCard
+        monthKey={selectedMonth}
+        onMonthChange={setSelectedMonth}
+        netBalance={balance}
+        income={income}
+        expenses={expenses}
       />
 
-      <TopCategoriesCard categories={topCats} totalExpenses={expenses} />
+      <TopCategoriesCard categories={topCats} totalExpenses={expenses} deltas={categoryDeltas} />
 
       <CategoryPieChart data={topCats} />
 
       <InsightCard insights={insights} />
-
-      <MonthComparisonTeaser
-        currentMonthKey={selectedMonth}
-        previousMonthKey={prevMonthKey}
-        currentExpenses={expenses}
-        previousExpenses={prevExpenses}
-      />
     </div>
   );
 }
