@@ -5,6 +5,7 @@ import {
   filterByMonth,
   totalIncome,
   totalExpenses,
+  totalOpening,
   TransactionGroupBy,
 } from '@/lib/calculations';
 import { formatCurrency } from '@/lib/format';
@@ -16,6 +17,7 @@ import { Select } from '@/components/ui/Select';
 import { Input } from '@/components/ui/Input';
 import { TransactionList } from './TransactionList';
 import { DeleteConfirmModal } from './DeleteConfirmModal';
+import { OpeningBalanceModal } from './OpeningBalanceModal';
 import { PlannedToggle } from '@/components/ui/PlannedToggle';
 const GROUP_BY_OPTIONS = [
   { value: 'date', label: 'Date' },
@@ -24,9 +26,19 @@ const GROUP_BY_OPTIONS = [
 ] as const;
 
 export function TransactionsScreen() {
-  const { transactions, selectedMonth, setSelectedMonth, deleteTransactionsBulk, isLoaded } = useAppData();
+  const {
+    transactions,
+    selectedMonth,
+    setSelectedMonth,
+    deleteTransactionsBulk,
+    addTransaction,
+    updateTransaction,
+    deleteTransaction,
+    isLoaded,
+  } = useAppData();
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showOpeningModal, setShowOpeningModal] = useState(false);
   const [groupBy, setGroupBy] = useState<TransactionGroupBy>('date');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -55,7 +67,9 @@ export function TransactionsScreen() {
   const visibleTx = useMemo(() => {
     const from = fromDate || monthStart;
     const to = toDate || monthEnd;
-    const byDate = monthTx.filter((tx) => tx.date >= from && tx.date <= to);
+    // Opening balance is edited through the 🏦 button, never listed as a row
+    const listable = monthTx.filter((tx) => tx.type !== 'opening');
+    const byDate = listable.filter((tx) => tx.date >= from && tx.date <= to);
     const byCategory = categoryFilter === 'all'
       ? byDate
       : byDate.filter((tx) => tx.category === categoryFilter);
@@ -66,7 +80,39 @@ export function TransactionsScreen() {
 
   const income = useMemo(() => totalIncome(visibleTx), [visibleTx]);
   const expenses = useMemo(() => totalExpenses(visibleTx), [visibleTx]);
-  const net = income - expenses;
+  // Month-wide: the opening balance is not part of the filtered list
+  const opening = useMemo(() => totalOpening(monthTx), [monthTx]);
+  const net = opening + income - expenses;
+
+  // One opening entry per month; the modal creates it if absent, edits it if present
+  const openingTx = useMemo(
+    () => monthTx.find((tx) => tx.type === 'opening'),
+    [monthTx]
+  );
+
+  const handleSaveOpening = useCallback(
+    async (amount: number) => {
+      const data = {
+        type: 'opening' as const,
+        date: `${selectedMonth}-01`,
+        title: 'Opening balance',
+        amount,
+        // never rendered — opening entries are excluded from the list
+        category: 'other' as const,
+        note: '',
+        isEstimated: false,
+      };
+      if (openingTx) await updateTransaction(openingTx.id, data);
+      else await addTransaction(data);
+      setShowOpeningModal(false);
+    },
+    [selectedMonth, openingTx, addTransaction, updateTransaction]
+  );
+
+  const handleRemoveOpening = useCallback(async () => {
+    if (openingTx) await deleteTransaction(openingTx.id);
+    setShowOpeningModal(false);
+  }, [openingTx, deleteTransaction]);
 
   const activeFilterCount =
     (fromDate ? 1 : 0) +
@@ -134,7 +180,23 @@ export function TransactionsScreen() {
             >
               Cancel
             </button>
-          ) : undefined
+          ) : (
+            <button
+              onClick={() => setShowOpeningModal(true)}
+              title="Opening balance"
+              aria-label="Edit opening balance"
+              className={`flex h-10 items-center gap-1.5 rounded-xl px-3 text-base transition ${
+                openingTx
+                  ? 'bg-violet-500/20 text-violet-200 hover:bg-violet-500/30'
+                  : 'bg-white/5 text-white/60 hover:bg-white/10 hover:text-white'
+              }`}
+            >
+              <span>🏦</span>
+              {openingTx && (
+                <span className="text-xs font-semibold">{formatCurrency(openingTx.amount)}</span>
+              )}
+            </button>
+          )
         }
       />
 
@@ -172,6 +234,11 @@ export function TransactionsScreen() {
         />
 
         <div className="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm">
+          {opening !== 0 && (
+            <span className="text-violet-300">
+              <span className="text-white/40">Start</span> {formatCurrency(opening)}
+            </span>
+          )}
           <span className="text-emerald-300">
             <span className="text-white/40">In</span> {formatCurrency(income)}
           </span>
@@ -279,6 +346,16 @@ export function TransactionsScreen() {
         onConfirm={handleBulkDelete}
         onCancel={() => setShowDeleteModal(false)}
       />
+
+      {showOpeningModal && (
+        <OpeningBalanceModal
+          monthKey={selectedMonth}
+          currentAmount={openingTx?.amount ?? null}
+          onSave={handleSaveOpening}
+          onRemove={handleRemoveOpening}
+          onCancel={() => setShowOpeningModal(false)}
+        />
+      )}
     </>
   );
 }

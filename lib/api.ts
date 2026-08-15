@@ -1,4 +1,4 @@
-import { Transaction, MonthlyBudget, TransactionFormData, Category } from './types';
+import { Transaction, MonthlyBudget, MonthlyBudgetPatch, TransactionFormData } from './types';
 
 const BASE = '/api';
 
@@ -67,15 +67,15 @@ export async function fetchBudgets(): Promise<MonthlyBudget[]> {
   return res.json();
 }
 
+/** Upsert a month's budget. Only the keys present in `patch` are written. */
 export async function upsertBudget(
   monthKey: string,
-  totalBudget?: number,
-  categoryBudgets?: Partial<Record<Category, number>>
+  patch: MonthlyBudgetPatch
 ): Promise<MonthlyBudget> {
   const res = await fetch(`${BASE}/budgets`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ monthKey, totalBudget, categoryBudgets }),
+    body: JSON.stringify({ monthKey, ...patch }),
   });
   if (!res.ok) throw new Error('Failed to update budget');
   return res.json();

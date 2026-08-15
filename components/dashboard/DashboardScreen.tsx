@@ -7,6 +7,7 @@ import {
   filterByMonth,
   totalIncome,
   totalExpenses,
+  totalOpening,
   netBalance,
   topExpenseCategories,
   categoryComparison,
@@ -28,6 +29,7 @@ export function DashboardScreen() {
 
   const income = useMemo(() => totalIncome(monthTx), [monthTx]);
   const expenses = useMemo(() => totalExpenses(monthTx), [monthTx]);
+  const opening = useMemo(() => totalOpening(monthTx), [monthTx]);
   const balance = useMemo(() => netBalance(monthTx), [monthTx]);
   const topCats = useMemo(() => topExpenseCategories(monthTx), [monthTx]);
   const categoryDeltas = useMemo(
@@ -60,6 +62,7 @@ export function DashboardScreen() {
         netBalance={balance}
         income={income}
         expenses={expenses}
+        opening={opening}
       />
 
       <TopCategoriesCard categories={topCats} totalExpenses={expenses} deltas={categoryDeltas} />

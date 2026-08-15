@@ -10,6 +10,8 @@ interface WelcomeCardProps {
   netBalance: number;
   income: number;
   expenses: number;
+  /** Already included in netBalance; shown so the figures reconcile */
+  opening?: number;
 }
 
 export function WelcomeCard({
@@ -18,6 +20,7 @@ export function WelcomeCard({
   netBalance,
   income,
   expenses,
+  opening = 0,
 }: WelcomeCardProps) {
   const balanceColor = netBalance >= 0 ? 'text-emerald-300' : 'text-red-300';
   return (
@@ -31,6 +34,12 @@ export function WelcomeCard({
           </p>
         </div>
         <div className="flex items-center gap-4 text-right text-sm">
+          {opening !== 0 && (
+            <div>
+              <p className="text-[10px] uppercase tracking-[0.15em] text-violet-300/70">Start</p>
+              <p className="font-semibold text-violet-300">{formatCurrency(opening)}</p>
+            </div>
+          )}
           <div>
             <p className="text-[10px] uppercase tracking-[0.15em] text-emerald-300/70">In</p>
             <p className="font-semibold text-emerald-300">{formatCurrency(income)}</p>

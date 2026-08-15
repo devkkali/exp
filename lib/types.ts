@@ -1,4 +1,4 @@
-export type TransactionType = 'income' | 'expense';
+export type TransactionType = 'income' | 'expense' | 'opening';
 
 export type Category =
   | 'salary'
@@ -33,6 +33,9 @@ export interface MonthlyBudget {
   totalBudget: number;
   categoryBudgets: Partial<Record<Category, number>>;
 }
+
+/** Fields of a MonthlyBudget that can be patched; omitted keys are left untouched */
+export type MonthlyBudgetPatch = Partial<Omit<MonthlyBudget, 'monthKey'>>;
 
 export interface CategoryMeta {
   key: Category;

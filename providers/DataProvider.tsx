@@ -9,7 +9,13 @@ import {
   useEffect,
   type ReactNode,
 } from 'react';
-import { Transaction, MonthlyBudget, Category, TransactionFormData } from '@/lib/types';
+import {
+  Transaction,
+  MonthlyBudget,
+  MonthlyBudgetPatch,
+  Category,
+  TransactionFormData,
+} from '@/lib/types';
 import { getCurrentMonthKey } from '@/lib/format';
 import * as api from '@/lib/api';
 
@@ -123,13 +129,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
     [budgets]
   );
 
-  const setBudget = useCallback(async (monthKey: string, totalBudget: number) => {
-    const existing = budgets.find((b) => b.monthKey === monthKey);
-    const result = await api.upsertBudget(
-      monthKey,
-      totalBudget,
-      existing?.categoryBudgets ?? {}
-    );
+  /** Send a partial budget update and merge the saved row back into state */
+  const patchBudget = useCallback(async (monthKey: string, patch: MonthlyBudgetPatch) => {
+    const result = await api.upsertBudget(monthKey, patch);
     setBudgets((prev) => {
       const idx = prev.findIndex((b) => b.monthKey === monthKey);
       if (idx >= 0) {
@@ -139,30 +141,24 @@ export function DataProvider({ children }: { children: ReactNode }) {
       }
       return [...prev, result];
     });
-  }, [budgets]);
+  }, []);
+
+  const setBudget = useCallback(
+    (monthKey: string, totalBudget: number) => patchBudget(monthKey, { totalBudget }),
+    [patchBudget]
+  );
 
   const setCategoryBudget = useCallback(async (
     monthKey: string,
     category: Category,
     amount: number
   ) => {
+    // categoryBudgets is stored as one JSON blob, so merge before writing
     const existing = budgets.find((b) => b.monthKey === monthKey);
-    const newCatBudgets = { ...(existing?.categoryBudgets ?? {}), [category]: amount };
-    const result = await api.upsertBudget(
-      monthKey,
-      existing?.totalBudget ?? 0,
-      newCatBudgets
-    );
-    setBudgets((prev) => {
-      const idx = prev.findIndex((b) => b.monthKey === monthKey);
-      if (idx >= 0) {
-        const next = [...prev];
-        next[idx] = result;
-        return next;
-      }
-      return [...prev, result];
+    await patchBudget(monthKey, {
+      categoryBudgets: { ...(existing?.categoryBudgets ?? {}), [category]: amount },
     });
-  }, [budgets]);
+  }, [budgets, patchBudget]);
 
   // ── Memoized value ───────────────────────────
 

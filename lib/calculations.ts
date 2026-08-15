@@ -1,4 +1,11 @@
-import { Transaction, Category, MonthlyBudget, MonthComparison, CategoryDelta } from './types';
+import {
+  Transaction,
+  TransactionType,
+  Category,
+  MonthlyBudget,
+  MonthComparison,
+  CategoryDelta,
+} from './types';
 import { CATEGORIES, EXPENSE_CATEGORIES } from './constants';
 import { getMonthKey } from './format';
 
@@ -16,7 +23,7 @@ export function filterEstimated(transactions: Transaction[]): Transaction[] {
   return transactions.filter((tx) => tx.isEstimated);
 }
 
-export function filterByType(transactions: Transaction[], type: 'income' | 'expense'): Transaction[] {
+export function filterByType(transactions: Transaction[], type: TransactionType): Transaction[] {
   return transactions.filter((tx) => tx.type === type);
 }
 
@@ -34,8 +41,15 @@ export function totalExpenses(transactions: Transaction[]): number {
     .reduce((sum, tx) => sum + tx.amount, 0);
 }
 
+/** Money already on hand at the start of the month, entered as 'opening' entries */
+export function totalOpening(transactions: Transaction[]): number {
+  return transactions
+    .filter((tx) => tx.type === 'opening')
+    .reduce((sum, tx) => sum + tx.amount, 0);
+}
+
 export function netBalance(transactions: Transaction[]): number {
-  return totalIncome(transactions) - totalExpenses(transactions);
+  return totalOpening(transactions) + totalIncome(transactions) - totalExpenses(transactions);
 }
 
 export function actualExpenses(transactions: Transaction[]): number {
@@ -128,8 +142,9 @@ export function compareMonths(
   const incB = totalIncome(txB);
   const expA = totalExpenses(txA);
   const expB = totalExpenses(txB);
-  const netA = incA - expA;
-  const netB = incB - expB;
+  // netBalance, not incA - expA, so opening entries count the same way they do everywhere else
+  const netA = netBalance(txA);
+  const netB = netBalance(txB);
 
   return {
     monthAKey,
@@ -193,7 +208,7 @@ function sortTransactionGroupKeys(keys: string[], groupBy: TransactionGroupBy): 
   }
 
   if (groupBy === 'type') {
-    const typeOrder: Record<string, number> = { income: 0, expense: 1 };
+    const typeOrder: Record<string, number> = { opening: 0, income: 1, expense: 2 };
     return next.sort((a, b) => (typeOrder[a] ?? 99) - (typeOrder[b] ?? 99));
   }
 
