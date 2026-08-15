@@ -2,6 +2,10 @@
 
 import { type InputHTMLAttributes } from 'react';
 
+/** Shared field styling, so bespoke fields (e.g. PasswordInput) stay visually identical */
+export const FIELD_CLASS =
+  'w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/30 focus:border-violet-500/50 focus:outline-none focus:ring-1 focus:ring-violet-500/30 transition';
+
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   error?: string;
@@ -16,11 +20,7 @@ export function Input({ label, error, className = '', id, ...props }: InputProps
           {label}
         </label>
       )}
-      <input
-        id={inputId}
-        className={`w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/30 focus:border-violet-500/50 focus:outline-none focus:ring-1 focus:ring-violet-500/30 transition ${className}`}
-        {...props}
-      />
+      <input id={inputId} className={`${FIELD_CLASS} ${className}`} {...props} />
       {error && <p className="text-xs text-red-400">{error}</p>}
     </div>
   );
@@ -42,7 +42,7 @@ export function Textarea({ label, className = '', id, ...props }: TextareaProps)
       <textarea
         id={inputId}
         rows={3}
-        className={`w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/30 focus:border-violet-500/50 focus:outline-none focus:ring-1 focus:ring-violet-500/30 transition resize-none ${className}`}
+        className={`${FIELD_CLASS} resize-none ${className}`}
         {...props}
       />
     </div>
